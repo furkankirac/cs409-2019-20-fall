@@ -26,10 +26,30 @@ public:
                 (*this)(i, j) = 0;
     }
 
-    ~Matrix()
+    ~Matrix() { delete[] data; }
+
+    Matrix(const Matrix<T>& other) :
+        num_rows(other.num_rows),
+        num_cols(other.num_cols),
+        data(new T[other.num_rows*other.num_cols])
     {
-        delete[] data;
+        std::cout << "Copy ctor has been called." << std::endl;
+        for(size_t i=0; i<num_rows; ++i)
+            for(size_t j=0; j<num_cols; ++j)
+                (*this)(i, j) = other(i, j);
     }
+
+    void operator=(const Matrix<T>& other)
+    {
+        num_rows = other.num_rows;
+        num_cols = other.num_cols;
+        data = new T[other.num_rows*other.num_cols];
+        std::cout << "Copy assign has been called." << std::endl;
+        for(size_t i=0; i<num_rows; ++i)
+            for(size_t j=0; j<num_cols; ++j)
+                (*this)(i, j) = other(i, j);
+    }
+
 
     void print() const
     {
@@ -51,13 +71,19 @@ public:
 int main(int argc, char* argv[])
 {
     auto m1 = Matrix<int>(3, 2);
-    auto m2 = Matrix<float>();
+    auto m2 = Matrix<int>();
 
     m1(0, 0) = 1000;
     m1(2, 1) = 2000;
-    m1.print();
 
     auto m3 = m1;
+    m1(0, 0) = 1;
+    m1.print();
+    m3.print();
+
+    m3 = m2;
+    m3.print();
+
 
 //    std::cout << m1(1, 1) << std::endl;
     return 0;
