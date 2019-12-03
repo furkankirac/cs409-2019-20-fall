@@ -1,4 +1,4 @@
-//#include <iostream>
+#include <iostream>
 //#include <string>
 
 // move semantics pitfalls
@@ -8,14 +8,18 @@
 // it can match to both lvalues and rvalues.
 // using std::move is an unconditional cast to rvalue.
 // this is wrong if constructor of A is used with an lvalue in call site.
-struct A
+namespace PF1
 {
-    B b_;
+    struct B { };
+    struct A
+    {
+        B b_;
 
-    template<typename T>
-    A(T&& t) : b_{std::move(t)}
-    { }
-};
+        template<typename T>
+        A(T&& t) : b_{std::move(t)}
+        { }
+    };
+}
 
 // pitfall #2:
 // T&& here is not a forwarding reference!
@@ -24,14 +28,18 @@ struct A
 // in an rvalue context, using std::forward is wrong
 // std::forward is a CONDITIONAL cast to rvalue. However, we are sure that
 // the context is already rvalue. std::move would be correct.
-template<typename T>
-struct A
+namespace PF2
 {
-    B b_;
+    struct B { };
+    template<typename T>
+    struct A
+    {
+        B b_;
 
-    A(T&& t) : b_{std::forward<T>(t)}
-    { }
-};
+        A(T&& t) : b_{std::forward<T>(t)}
+        { }
+    };
+}
 
 // pitfall #3:
 // T&& is a forwarding reference.
@@ -41,34 +49,44 @@ struct A
 // first move constructor using 't' will steal its internals.
 // 't' will be useless for its second usage.
 // will cause major bug that cannot be easily detected
-struct A
+namespace PF3
 {
-    B b_;
-    C c_;
-
-    template<typename T>
-    A(T&& t)
-        : b_{std::forward<T>(t)}
-        , c_{std::forward<T>(t)}
+    struct B { };
+    struct C { };
+    struct A
     {
-    }
-};
+        B b_;
+        C c_;
+
+        template<typename T>
+        A(T&& t)
+            : b_{std::forward<T>(t)}
+            , c_{std::forward<T>(t)}
+        {
+        }
+    };
+}
 
 
 // pitfall #4:
 // THIS WAS A TRICK DURING CLASS LECTURE. NOTHING IS WRONG WITH BELOW CODE
-struct A
+namespace PF4
 {
-    B b_;
-    C c_;
-
-    template<typename T1, typename T2>
-    A(T1&& t1, T2&& t2)
-        : b_{std::forward<T1>(t1)}
-        , c_{std::forward<T2>(t2)}
+    struct B { };
+    struct C { };
+    struct A
     {
-    }
-};
+        B b_;
+        C c_;
+
+        template<typename T1, typename T2>
+        A(T1&& t1, T2&& t2)
+            : b_{std::forward<T1>(t1)}
+            , c_{std::forward<T2>(t2)}
+        {
+        }
+    };
+}
 
 template<typename ...>
 struct TypeDisplayer;

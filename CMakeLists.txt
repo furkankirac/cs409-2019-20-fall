@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 2.8)
 
 project(advcpp)
 
-SET(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+#should be smt like below for MSVC
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+
+#SET(CMAKE_CXX_STANDARD 17)
 #SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 #SET(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -27,3 +31,6 @@ add_executable(w8a6 "week8-app6.cpp")
 add_executable(w9a1 "week9-app1.cpp")
 add_executable(w9a2 "week9-app2.cpp")
 add_executable(w9a3 "week9-app3.cpp")
+add_executable(w10a1 "week10-app1.cpp")
+add_executable(w10a2 "week10-app2.cpp")
+add_executable(w10a3 "week10-app3.cpp")
