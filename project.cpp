@@ -12,15 +12,15 @@
 // predicates
 namespace predicates
 {
-    auto less_than = [](double threshold) { return [=](double value) { return value < threshold; }; };
-    auto greater_than = [](double threshold) { return [=](double value) { return value > threshold; }; };
-    auto all_of = [](auto ... preds) { return [=](double value) { return (preds(value) && ...); }; };
+    auto less_than = [](auto threshold) { return [=](auto value) { return value < threshold; }; };
+    auto greater_than = [](auto threshold) { return [=](auto value) { return value > threshold; }; };
+    auto all_of = [](auto ... preds) { return [=](auto value) { return (preds(value) && ...); }; };
 }
 
 namespace actions
 {
-    auto multiply_by = [](double coef) { return [=](double value) { return value * coef; }; };
-    auto if_then = [](auto predicate, auto action) { return [=](double& value) { if(predicate(value)) value = action(value); }; };
+    auto multiply_by = [](auto coef) { return [=](auto value) { return value * coef; }; };
+    auto if_then = [](auto predicate, auto action) { return [=](auto& value) { if(predicate(value)) value = action(value); }; };
 }
 
 namespace views
