@@ -20,7 +20,7 @@ namespace predicates
 namespace actions
 {
     auto multiply_by = [](auto coef) { return [=](auto value) { return value * coef; }; };
-    auto if_then = [](auto predicate, auto action) { return [=](auto& value) { if(predicate(value)) value = action(value); }; };
+    auto if_then = [](auto predicate, auto action) { return [=](auto value) { if(predicate(value)) value = action(value); return value; }; };
 }
 
 namespace views
@@ -55,11 +55,7 @@ namespace algorithms
 
         TransformingIterator(Iterator iterator, Callable callable) : Iterator{iterator}, callable{callable} { }
         Iterator& get_orig_iter() { return ((Iterator&)*this); }
-        double operator*() {
-            auto val = *get_orig_iter();
-            callable(val);
-            return val;
-        }
+        double operator*() { return callable(*get_orig_iter()); }
     };
 
     auto transform = [](auto action) {
