@@ -14,7 +14,7 @@ namespace predicates
 {
     auto less_than = [](auto threshold) { return [=](auto value) { return value < threshold; }; };
     auto greater_than = [](auto threshold) { return [=](auto value) { return value > threshold; }; };
-    auto all_of = [](auto ... preds) { return [=](auto value) { return (preds(value) && ...); }; };
+    auto all_of = [](const auto ... preds) { return [=](auto value) { return (preds(value) && ...); }; };
 }
 
 namespace actions
@@ -38,8 +38,8 @@ namespace algorithms
         using LazyIterator = Iterator; // required for accessing the used Iterator type from other locations
         Iterator m_begin;
         Iterator m_end;
-        auto begin() { return m_begin; }
-        auto end() { return m_end; }
+        auto begin() const { return m_begin; }
+        auto end() const { return m_end; }
     };
 
     template<typename Iterator>
@@ -53,13 +53,13 @@ namespace algorithms
 
         Callable callable;
 
-        TransformingIterator(Iterator iterator, Callable callable) : Iterator{iterator}, callable{callable} { }
+        TransformingIterator(const Iterator iterator, const Callable& callable) : Iterator{iterator}, callable{callable} { }
         Iterator& get_orig_iter() { return ((Iterator&)*this); }
         double operator*() { return callable(*get_orig_iter()); }
     };
 
-    auto transform = [](auto action) {
-        return [=](auto& container) {
+    auto transform = [](const auto action) {
+        return [=](auto&& container) {
             using Container = std::decay_t<decltype(container)>;
             using Iterator = typename Container::iterator;
             using IteratorX = TransformingIterator<Iterator, decltype(action)>;
@@ -68,8 +68,63 @@ namespace algorithms
     };
 
     // ---[ FILTER implementation: implement your "Filtering Iterator" here
+    template<typename Iterator, typename Callable>
+    struct FilteringIterator : Iterator
+    {
+        using OriginalIterator = Iterator; // required for accessing the used Iterator type from other locations
+
+        Iterator end;
+        Callable callable;
+
+        FilteringIterator(const Iterator iterator, const Iterator end, const Callable& callable)
+            : Iterator{iterator}
+            , end{end}
+            , callable{callable}
+        { }
+
+        Iterator& get_orig_iter() { return ((Iterator&)*this); }
+
+        void operator++() { ++get_orig_iter(); skip(); }
+        void operator++(int) { get_orig_iter()++; skip(); }
+
+        decltype(auto) operator*()
+        {
+            skip();
+            auto& val = *get_orig_iter();
+            return (val);
+        }
+
+        void skip()
+        {
+            while((Iterator&)*this != end && !callable(*get_orig_iter()))
+                ++(*this);
+        }
+    };
+
+    auto filter = [](const auto action) {
+        return [=](auto&& container) {
+            using Container = std::decay_t<decltype(container)>;
+            using Iterator = typename Container::iterator;
+            using IteratorX = FilteringIterator<Iterator, decltype(action)>;
+            return Range{IteratorX{container.begin(), container.end(), action}, IteratorX{container.end(), container.end(), action}};
+        };
+    };
 
     // ---[ TO implementation: implement your "render into a container" method here
+    template<template<typename...> typename ContainerBase>
+    inline auto to()
+    {
+        return [](auto&& range) {
+            using RangeType = std::decay_t<decltype(range)>;
+            using LazyIterator = typename RangeType::LazyIterator;
+            using OriginalIterator = typename LazyIterator::OriginalIterator;
+            using T = std::remove_reference_t<decltype(*std::declval<OriginalIterator>())>;
+            auto c = ContainerBase<T>{};
+            for(const auto& x : range)
+                c.push_back(x);
+            return c;
+        };
+    }
 }
 
 template<typename CONTAINER, typename RANGE>
@@ -100,8 +155,12 @@ int main(int argc, char* argv[])
     // prints 17.5 and 22.5 to the console
 
     new_line();
-    auto u = std::vector<int>{10, 20, 30};
-    auto u_transformed = u | transform(multiply_by(2)) | to<std::vector>();
+    for(auto a : v | filter(less_than(15))) // filter is applied lazily as the range is traversed
+        std::cout << a << std::endl;
+    //  prints 2.5, 7.5 and 12.5
+
+    new_line();
+    auto u_transformed = std::vector<int>{10, 20, 30} | transform(multiply_by(2)) | to<std::vector>();
     for(auto a : u_transformed) // u_transformed is an std::vector<int> automatically because of to<std::vector>
         std::cout << a << std::endl;
 
